@@ -1,8 +1,8 @@
 # NumPadCalc
-NumPadCalc is intended to be used with full keyboard (with numeric keys) and being easily launched with hotkey "Pause" or "NumLock".
+Focus of NumPadCalc is on usability. It is intended to be used with full keyboard (with numeric keys) and being easily launched with hotkey "Pause" or "NumLock".
 The Calculator was mainly tested on Windows.
 The NumPadCalc supports all Python Math functions. Some additional information can be found in Help of the NumPadCalc.
-Using Pyinstaller it is possible to compile an executible file for standalone operation. Precompiled executable is already available from this repository.
+Using Pyinstaller it is possible to compile an executible file for a standalone operation. Precompiled executable is already available from this repository.
 I will be happy if this Calculator helps someone in his daily work !
 
 # Known bugs / weaknesses
