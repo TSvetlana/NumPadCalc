@@ -11,20 +11,39 @@ from tkinter import *
 from tkinter import ttk
 import math
 from decimal import Decimal
-import os # for MacOS only
+#import os # for MacOS only
 from system_hotkey import SystemHotkey # not supported by MacOS => to be commented out for MacOS
 #import time
+import ctypes
 
 
 class Calc:
 	def getandreplace(self):  # replace x, + and % to symbols that can be used in calculations
-# 		# we wont re write this to the text box until we are done with calculations
+		# we wont re write this to the text box until we are done with calculations
 
 		self.txt = self.e.get() # Get value from text box and assign it to the global txt var
 		self.txt = self.txt.replace('^', '**')
 		self.txt = self.txt.replace('÷', '/')
 		self.txt = self.txt.replace('x', '*')
-		
+
+	def turn_NumLock(self):
+		#print('delay 0.1 sec')
+		#root.after(100)
+		self.NL_flag = True
+		self.dll = ctypes.WinDLL('user32')
+		#print('turn_NumLock called')
+		self.dll.GetKeyState.restype = ctypes.c_short
+		self.VK_NUMLOCK = 0x90
+		#print('a='+ str(self.dll.GetKeyState(self.VK_NUMLOCK)))
+		while self.dll.GetKeyState(self.VK_NUMLOCK) < 0:
+			continue
+		if self.dll.GetKeyState(self.VK_NUMLOCK) == 0:
+			self.dll.keybd_event(self.VK_NUMLOCK, 0X3a, 0X1, 0)
+			##print('b=' + str(self.dll.GetKeyState(self.VK_NUMLOCK)))
+			self.dll.keybd_event(self.VK_NUMLOCK, 0X3a, 0X3, 0)
+			#print('c=' + str(self.dll.GetKeyState(self.VK_NUMLOCK)))
+			self.NL_flag = False
+			#print('turn_NumLock=' + str(self.NL_flag))
 
 	def evalorresult(self):
 		self.txt = self.e.get()
@@ -145,7 +164,7 @@ class Calc:
 
 				self.txt= self.txt[0:x+idx] + 'math.'+ self.txt[x+idx:]
 				idx+=5
-			print(self.txt)
+			#print(self.txt)
 			try:
 				self.txt = self.floatorint(float(eval(str(self.txt))))  # evaluate the expression using the eval function float('{:.13f}'.format(eval(str(self.txt))))
 			
@@ -157,13 +176,13 @@ class Calc:
 
 	def floatorint(self, equation):
 		if int(equation)==float(equation) and len(str(equation))<10:
-			print(len(str(equation)))
+			#print(len(str(equation)))
 			return int(equation)
 		elif int(equation)==float(equation) and len(str(equation))>9:
-			print(len(str(equation)))
+			#print(len(str(equation)))
 			return "{:.7e}".format(Decimal(equation))
 		else:
-			print(len(str(equation)))
+			#print(len(str(equation)))
 			return float('%.13g' % equation)
 
 	def refreshinsertedtext(self,specfunc, is_digit):
@@ -278,11 +297,17 @@ class Calc:
 			root.destroy() # close Calculator with Control-D
 
 	def iconifyordeiconify(self):
-		if root.wm_state()=='withdrawn':
-			root.deiconify()
-			self.e.focus_set()
-		else:
-			root.withdraw()
+		if self.NL_flag:
+			if root.wm_state()=='withdrawn' or root.wm_state()=='iconic':
+				root.deiconify()
+				self.e.focus_set()
+			else:
+				root.withdraw()
+		self.turn_NumLock()
+
+	def withdraw():
+		#print('withdraw')
+		root.withdraw()
 
 	def listboxclick(self, event):
 		self.e.delete(0, 'end')
@@ -318,7 +343,8 @@ class Calc:
 
 	def about(self):
 		self.about_window = Toplevel(root) #Tk()
-		self.about_window.title("About NumPadCalc")
+		self.about_window.title("About NumPad Calculator")
+		#self.about_window.overrideredirect(1) # removes top bar and frame
 		self.about_window.geometry()
 		self.about_window.config(bg='gray96', padx=2, pady=4)
 		self.about_window.lift(root)
@@ -353,7 +379,10 @@ For mathematical functions not available from GUI buttons simply try writing the
 
 	def __init__(self, master):# Constructor method
 		self.txt = '0'  # Global var to work with text box contents
-		master.title('NumPadCalc')
+		self.NL_flag = True
+		#print('init=' + str(self.NL_flag))
+		self.turn_NumLock()
+		master.title('NumPad Calculator')
 		w = master.winfo_screenwidth() # width of display
 		h = master.winfo_screenheight() # hight of display
 		w = w//2 # center of display
@@ -405,16 +434,17 @@ For mathematical functions not available from GUI buttons simply try writing the
 		self.e.bind('<Key>', lambda evt: self.keyaction(evt))
 		
 		hk = SystemHotkey()# not supported by MacOS => to be commented out for MacOS
-		hk2 = SystemHotkey()# not supported by MacOS => to be commented out for MacOS
+		#hk2 = SystemHotkey()# not supported by MacOS => to be commented out for MacOS
 		hk.register(['kp_numlock'], overwrite=True, callback=lambda event: self.iconifyordeiconify())# not supported by MacOS => to be commented out for MacOS
-		hk2.register(['pause'], overwrite=True, callback=lambda event: self.iconifyordeiconify())# not supported by MacOS => to be commented out for MacOS
-
-
+		#hk2.register(['pause'], overwrite=True, callback=lambda event: self.iconifyordeiconify())# not supported by MacOS => to be commented out for MacOS
+		
 # Main
 root = Tk()
 obj = Calc(root)  # object instantiated
 root.call('wm', 'attributes', '.', '-topmost', '1')# sets calculator visible all the time (always on top)
-os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')# brings Calculator in focus for Macos
+#os.system('''/usr/bin/osascript -e 'tell app "Finder" to set frontmost of process "Python" to true' ''')# brings Calculator in focus for Macos
 #https://stackoverflow.com/questions/1892339/how-to-make-a-tkinter-window-jump-to-the-front
+
+root.protocol('WM_DELETE_WINDOW', Calc.withdraw)
 
 root.mainloop()
